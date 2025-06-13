@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Online Prices - Agricultural Price Predictor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #FF9800;
+            --dark-color: #2E7D32;
+            --light-bg: #F9FAFB;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --danger-color: #F44336;
+            --info-color: #2196F3;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #66BB6A;
+            --secondary-color: #FFB300;
+            --dark-color: #1B5E20;
+            --light-bg: #1F2937;
+            --text-dark: #F9FAFB;
+            --text-light: #D1D5DB;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .card {
+            background-color: #374151;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--dark-color);
+        }
+
+        .trend-up {
+            color: var(--primary-color);
+        }
+
+        .trend-down {
+            color: var(--danger-color);
+        }
+
+        .trend-stable {
+            color: var(--info-color);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <a href="/" class="text-white text-xl font-bold flex items-center">
+                <i class="fas fa-leaf mr-2"></i> AgriPrice Predictor
+            </a>
+            <div class="flex items-center space-x-6">
+                <a href="/" class="text-white hover:text-gray-200">Home</a>
+                <button id="themeToggle" class="text-white hover:text-gray-200">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="card p-6">
+            <h1 class="text-2xl font-bold mb-4 flex items-center">
+                <i class="fas fa-shopping-cart mr-2"></i> Compare Online Prices
+            </h1>
+            <p class="text-gray-600 mb-6" data-theme="dark:text-gray-300">
+                Prices sourced from online stores like BigBasket for selected commodities.
+            </p>
+            <div id="comparisonTable" class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-100" data-theme="dark:bg-gray-700">
+                            <th class="py-3 px-4">Commodity</th>
+                            <th class="py-3 px-4">Price (₹/kg)</th>
+                            <th class="py-3 px-4">Change (%)</th>
+                            <th class="py-3 px-4">Trend</th>
+                            <th class="py-3 px-4">Date</th>
+                            <th class="py-3 px-4">Source</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonBody"></tbody>
+                </table>
+            </div>
+            <button id="backBtn" class="btn-primary mt-6 px-6 py-2 rounded-lg flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Home
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2025 Agricultural Price Predictor | Powered by xAI</p>
+            <p class="text-sm mt-2">Data from Agmarknet, BigBasket, NCDEX, and OpenWeatherMap</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Dark Mode Toggle
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            document.getElementById('themeToggle').innerHTML = `<i class="fas fa-${isDark ? 'moon' : 'sun'}"></i>`;
+        });
+
+        // Load Comparison Data
+        const comparisonData = JSON.parse(localStorage.getItem('comparisonData') || '{}');
+        const tbody = document.getElementById('comparisonBody');
+
+        if (comparisonData.status === 'success') {
+            comparisonData.comparison_data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-3 px-4">${item.commodity}</td>
+                    <td class="py-3 px-4">₹${item.price.toFixed(2)}</td>
+                    <td class="py-3 px-4">${item.price_change_percent}%</td>
+                    <td class="py-3 px-4 ${item.trend_direction.includes('Rising') ? 'trend-up' : item.trend_direction.includes('Falling') ? 'trend-down' : 'trend-stable'}">${item.trend_direction}</td>
+                    <td class="py-3 px-4">${item.date}</td>
+                    <td class="py-3 px-4">${comparisonData.region === 'Online' ? 'BigBasket' : 'Unknown'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="py-3 px-4 text-center">No comparison data available.</td></tr>';
+        }
+
+        // Back Button
+        document.getElementById('backBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+    </script>
+</body>
+
+</html>

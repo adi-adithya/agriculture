@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriPrice Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/styles.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner-overlay" style="display: none;">
+        <div class="spinner-container">
+            <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status"></div>
+            <div class="spinner-text">Loading price data...</div>
+        </div>
+    </div>
+    <!-- Navigation Bar -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+            <div class="container">
+                <a class="navbar-brand" href="#"><i class="fas fa-leaf animate-pulse"></i> AgriPrice Tracker</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#"><i class="fas fa-home"></i> Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#"><i class="fas fa-chart-line"></i> Price Trends</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#"><i class="fas fa-lightbulb"></i> Predictions</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown">
+                                <i class="fas fa-apple-alt"></i> Products
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-animate">
+                                <li><a class="dropdown-item" href="#"
+                                        onclick="searchCategory('Vegetables')">Vegetables</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="searchCategory('Fruits')">Fruits</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="searchCategory('Cereals')">Cereals</a>
+                                </li>
+                                <li><a class="dropdown-item" href="#" onclick="searchCategory('Pulses')">Pulses</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#"><i class="fas fa-info-circle"></i> About</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Hero Section with Search -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h1><i class="fas fa-leaf"></i> AgriPrice Tracker</h1>
+                    <p class="lead">Real-time agricultural commodity prices, trends, and predictions</p>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="search-card">
+                        <form id="searchForm" method="post" action="/search">
+                            <div class="mb-3">
+                                <label for="searchInput" class="form-label" style="color: black;"><b>Search for a
+                                        product
+                                        or category</b></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-lg" id="searchInput"
+                                        name="query" placeholder="Enter product name (e.g., Rice, Tomato, Vegetables)"
+                                        list="productSuggestions" required>
+                                    <datalist id="productSuggestions"></datalist>
+                                </div>
+                                <div id="searchSuggestions" class="datalist-suggestions"></div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="locationInput" class="form-label" style="color: black;"><b>Location
+                                            (Optional)</b></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="locationInput" name="location"
+                                            placeholder="Current location for better predictions">
+                                        <button type="button" class="btn btn-outline-secondary" id="getLocationBtn">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Format: latitude,longitude (e.g., 28.6139,77.2090)</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="periodInput" class="form-label">Time Period</label>
+                                    <select class="form-select" id="periodInput" name="period">
+                                        <option value="7">Last 7 days</option>
+                                        <option value="14">Last 14 days</option>
+                                        <option value="30" selected>Last 30 days</option>
+                                        <option value="60">Last 60 days</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-lg search-btn">
+                                    <i class="fas fa-search search-icon"></i> Search Prices
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="container" id="resultsContainer" style="display: none;">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 id="resultsTitle" class="mb-3">Search Results</h2>
+                <div id="resultsInfo" class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Showing current prices and trends for your search.
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="resultsContent">
+            <!-- Results will be populated here -->
+        </div>
+    </div>
+
+    <!-- No Results Message -->
+    <div class="container" id="noResultsContainer" style="display: none;">
+        <div class="row">
+            <div class="col-12 text-center py-5">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="noResultsMessage">No results found. Please try a different search term.</span>
+                </div>
+                <button class="btn btn-outline-success mt-3" onclick="resetSearch()">
+                    <i class="fas fa-search"></i> Try Another Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Content -->
+    <div class="container" id="welcomeContainer">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3><i class="fas fa-chart-line"></i> Track Price Trends</h3>
+                        <p>Monitor daily price changes across different markets and identify patterns to make informed
+                            decisions.</p>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-success" onclick="searchCategory('Vegetables')">
+                                <i class="fas fa-carrot"></i> Vegetables
+                            </button>
+                            <button class="btn btn-outline-success" onclick="searchCategory('Fruits')">
+                                <i class="fas fa-apple-alt"></i> Fruits
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3><i class="fas fa-lightbulb"></i> Price Predictions</h3>
+                        <p>Our advanced AI model analyzes historical data, seasonal patterns, and market factors to
+                            predict future price trends.</p>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-success" onclick="searchCategory('Cereals')">
+                                <i class="fas fa-wheat-aw"></i> Cereals
+                            </button>
+                            <button class="btn btn-outline-success" onclick="searchCategory('Pulses')">
+                                <i class="fas fa-seedling"></i> Pulses
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h3><i class="fas fa-search-dollar"></i> Popular Searches</h3>
+                        <div class="row mt-4">
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Rice')">
+                                    <i class="fas fa-bowl-rice"></i> Rice
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Onion')">
+                                    <i class="fas fa-circle"></i> Onion
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Tomato')">
+                                    <i class="fas fa-apple-alt"></i> Tomato
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Potato')">
+                                    <i class="fas fa-circle"></i> Potato
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Apple')">
+                                    <i class="fas fa-apple-alt"></i> Apple
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Wheat')">
+                                    <i class="fas fa-wheat-aw"></i> Wheat
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Toor Dal')">
+                                    <i class="fas fa-seedling"></i> Toor Dal
+                                </button>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <button class="btn btn-success w-100" onclick="quickSearch('Sugar')">
+                                    <i class="fas fa-cubes"></i> Sugar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>AgriPrice Tracker</h5>
+                    <p>Real-time agricultural commodity prices, trends, and predictions to help farmers, wholesalers,
+                        and consumers make better decisions.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Home</a></li>
+                        <li><a href="#" class="text-white">About</a></li>
+                        <li><a href="#" class="text-white">Contact</a></li>
+                        <li><a href="#" class="text-white">API</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contact Us</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i> lakkaramabhiram81@gmail.com</li>
+                        <li><i class="fas fa-phone me-2"></i> +91 6302288094</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 text-center">
+                    <p class="mb-0">&copy; 2025 AgriPrice Tracker. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Product card template -->
+    <template id="productCardTemplate">
+        <div class="col-lg-6 mb-4">
+            <div class="card product-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 product-title"></h5>
+                    <span class="price-trend"></span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <div>
+                                    <p class="mb-0 text-muted">Current Price</p>
+                                    <div class="current-price"></div>
+                                </div>
+                            </div>
+                            <p class="mb-2"><strong>Category:</strong> <span class="product-category"></span></p>
+                            <p class="mb-2"><strong>Market:</strong> <span class="product-market"></span></p>
+                            <p class="mb-2"><strong>Date:</strong> <span class="price-date"></span></p>
+                            <div class="mb-3">
+                                <p class="mb-1"><strong>Trend:</strong></p>
+                                <p class="trend-description mb-2"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="factors-container">
+                                <p class="mb-1"><strong>Price Factors:</strong></p>
+                                <div class="factors-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs mt-4" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-history"
+                                type="button" role="tab">
+                                <i class="fas fa-chart-line"></i> Price History
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-markets" type="button"
+                                role="tab">
+                                <i class="fas fa-store"></i> Markets
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-prediction" type="button"
+                                role="tab">
+                                <i class="fas fa-crystal-ball"></i> Predictions
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tab-history" role="tabpanel">
+                            <img class="price-history-chart img-fluid" src="" alt="Price History">
+                        </div>
+                        <div class="tab-pane fade" id="tab-markets" role="tabpanel">
+                            <img class="market-comparison-chart img-fluid" src="" alt="Market Comparison">
+                        </div>
+                        <div class="tab-pane fade" id="tab-prediction" role="tabpanel">
+                            <div class="text-center mb-3 prediction-summary"></div>
+                            <img class="prediction-chart img-fluid" src="" alt="Price Prediction">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/script.js"></script>
+    <!-- <script src="/static/index.js"></script> -->
+</body>
+
+</html>
